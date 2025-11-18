@@ -7,17 +7,17 @@ export default function ResultsPage() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-  fetch("/api/get-data")
-    .then(async res => {
-      console.log("RAW RESPONSE:", res);
-      const json = await res.json();
-      console.log("JSON DATA:", json);
-      return json;
-    })
-    .then(setItems)
-    .catch(err => console.error("FETCH ERROR:", err));
+    fetch("/api/get-data")
+      .then(async (res) => {
+        if (!res.ok) throw new Error("API Error: " + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Loaded:", data);
+        setItems(data);
+      })
+      .catch((err) => console.error("FETCH ERROR:", err));
   }, []);
-
 
   return (
     <div style={styles.wrapper}>
@@ -29,13 +29,19 @@ export default function ResultsPage() {
             <tr>
               <th style={styles.th}>ID</th>
               <th style={styles.th}>Device</th>
+              <th style={styles.th}>Type</th>
+              <th style={styles.th}>OS</th>
               <th style={styles.th}>User Agent</th>
+
               <th style={styles.th}>IP</th>
-              <th style={styles.th}>IP City</th>
-              <th style={styles.th}>IP Country</th>
+              <th style={styles.th}>City</th>
+              <th style={styles.th}>Country</th>
               <th style={styles.th}>IP Lat</th>
               <th style={styles.th}>IP Lon</th>
-              <th style={styles.th}>GPS</th>
+
+              <th style={styles.th}>GPS Lat</th>
+              <th style={styles.th}>GPS Lon</th>
+
               <th style={styles.th}>Time</th>
               <th style={styles.th}>Map</th>
             </tr>
@@ -45,45 +51,50 @@ export default function ResultsPage() {
             {items.map((item: any, index: number) => (
               <tr
                 key={item.id}
-                style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}
+                style={
+                  index % 2 === 0 ? styles.rowEven : styles.rowOdd
+                }
               >
                 <td style={styles.td}>{item.id}</td>
-                <td style={styles.td}>{item.device}</td>
-                <td style={styles.td}>{item.userAgent}</td>
 
-                <td style={styles.td}>{item.ip}</td>
-                <td style={styles.td}>{item.ipCity}</td>
-                <td style={styles.td}>{item.ipCountry}</td>
-                <td style={styles.td}>{item.ipLat}</td>
-                <td style={styles.td}>{item.ipLon}</td>
-
+                <td style={styles.td}>{item.device ?? "—"}</td>
+                <td style={styles.td}>{item.deviceType ?? "—"}</td>
+                <td style={styles.td}>{item.os ?? "—"}</td>
                 <td style={styles.td}>
-                  {item.gpsLat && item.gpsLon
-                    ? `${item.gpsLat}, ${item.gpsLon}`
-                    : "No GPS"}
+                  <div style={styles.userAgent}>
+                    {item.userAgent ?? "—"}
+                  </div>
                 </td>
+
+                <td style={styles.td}>{item.ip ?? "—"}</td>
+                <td style={styles.td}>{item.ipCity ?? "—"}</td>
+                <td style={styles.td}>{item.ipCountry ?? "—"}</td>
+                <td style={styles.td}>{item.ipLat ?? "—"}</td>
+                <td style={styles.td}>{item.ipLon ?? "—"}</td>
+
+                <td style={styles.td}>{item.gpsLat ?? "—"}</td>
+                <td style={styles.td}>{item.gpsLon ?? "—"}</td>
 
                 <td style={styles.td}>
                   {new Date(item.timestamp).toLocaleString()}
                 </td>
 
                 <td style={styles.td}>
-                  {/* Auto Map Button */}
                   {item.gpsLat && item.gpsLon ? (
                     <a
                       href={`https://www.google.com/maps?q=${item.gpsLat},${item.gpsLon}`}
                       target="_blank"
                       style={styles.mapButton}
                     >
-                      Maps
+                      GPS Map
                     </a>
                   ) : item.ipLat && item.ipLon ? (
                     <a
                       href={`https://www.google.com/maps?q=${item.ipLat},${item.ipLon}`}
                       target="_blank"
-                      style={styles.mapButton}
+                      style={styles.mapButtonAlt}
                     >
-                      IP Maps
+                      IP Map
                     </a>
                   ) : (
                     <span style={styles.noGps}>No Map</span>
@@ -101,24 +112,26 @@ export default function ResultsPage() {
 const styles: Record<string, any> = {
   wrapper: {
     padding: 20,
-    maxWidth: 1200,
+    maxWidth: 1400,
     margin: "0 auto",
   },
   title: {
     fontSize: 28,
     textAlign: "center",
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 30,
   },
   tableContainer: {
     overflowX: "auto",
     borderRadius: 10,
     border: "1px solid #ddd",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
     fontSize: 14,
+    minWidth: 1100,
   },
   th: {
     padding: "12px 10px",
@@ -142,13 +155,27 @@ const styles: Record<string, any> = {
   mapButton: {
     background: "#2563eb",
     color: "white",
-    padding: "6px 12px",
+    padding: "6px 10px",
+    borderRadius: 6,
+    textDecoration: "none",
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  mapButtonAlt: {
+    background: "#059669",
+    color: "white",
+    padding: "6px 10px",
     borderRadius: 6,
     textDecoration: "none",
     fontSize: 13,
   },
   noGps: {
-    color: "#888",
+    color: "#999",
     fontStyle: "italic",
+  },
+  userAgent: {
+    maxWidth: 250,
+    whiteSpace: "normal",
+    wordBreak: "break-word",
   },
 };

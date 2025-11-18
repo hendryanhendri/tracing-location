@@ -8,19 +8,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 model Tracking {
-  id        Int      @id @default(autoincrement())
-  device    String?
-  userAgent String?
-  ip        String?
-  ipCity    String?
-  ipCountry String?
-  ipLat     Float?
-  ipLon     Float?
-  gpsLat    Float?
-  gpsLon    Float?
-  timestamp DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  device     String?
+  deviceType String?
+  os         String?
+  userAgent  String?
+  ip         String?
+  ipCity     String?
+  ipCountry  String?
+  ipLat      Float?
+  ipLon      Float?
+  gpsLat     Float?
+  gpsLon     Float?
+  timestamp  DateTime @default(now())
 
   @@unique([ip, userAgent])
 }
+
 
 

