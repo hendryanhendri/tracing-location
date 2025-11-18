@@ -7,10 +7,17 @@ export default function ResultsPage() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetch("/api/get-data")
-      .then(res => res.json())
-      .then(setItems);
+  fetch("/api/get-data")
+    .then(async res => {
+      console.log("RAW RESPONSE:", res);
+      const json = await res.json();
+      console.log("JSON DATA:", json);
+      return json;
+    })
+    .then(setItems)
+    .catch(err => console.error("FETCH ERROR:", err));
   }, []);
+
 
   return (
     <div style={styles.wrapper}>

@@ -7,8 +7,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-
 model Tracking {
   id        Int      @id @default(autoincrement())
   device    String?
@@ -24,4 +22,5 @@ model Tracking {
 
   @@unique([ip, userAgent])
 }
+
 
