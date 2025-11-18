@@ -1,0 +1,24 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Tracking {
+  id        Int      @id @default(autoincrement())
+  device    String?
+  userAgent String?
+  ip        String?
+  ipCity    String?
+  ipCountry String?
+  ipLat     Float?
+  ipLon     Float?
+  gpsLat    Float?
+  gpsLon    Float?
+  timestamp DateTime @default(now())
+}
