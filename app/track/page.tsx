@@ -100,6 +100,7 @@ export default function TrackPage() {
             </p>
 
             <button
+             disabled={!ready}
               style={{
                 ...styles.button,
                 opacity: ready ? 1 : 0.5,
