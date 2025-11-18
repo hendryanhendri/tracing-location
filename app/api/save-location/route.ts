@@ -11,9 +11,10 @@ export async function POST(req: Request) {
 
   const existing = await prisma.tracking.findUnique({
     where: {
-      ip_userAgent: {
-        ip: body.ip,
-        userAgent: body.userAgent,
+      device_deviceType_os: {
+        device: body.device,
+        deviceType: body.deviceType,
+        os: body.os,
       },
     },
   });
@@ -25,11 +26,13 @@ export async function POST(req: Request) {
         deviceType: body.deviceType,
         os: body.os,
         userAgent: body.userAgent,
+
         ip: body.ip,
         ipCity: body.ipCity,
         ipCountry: body.ipCountry,
         ipLat: body.ipLat,
         ipLon: body.ipLon,
+
         gpsLat: body.gpsLat,
         gpsLon: body.gpsLon,
       },
@@ -40,24 +43,21 @@ export async function POST(req: Request) {
 
   const updated = await prisma.tracking.update({
     where: {
-      ip_userAgent: {
-        ip: body.ip,
-        userAgent: body.userAgent,
+      device_deviceType_os: {
+        device: body.device,
+        deviceType: body.deviceType,
+        os: body.os,
       },
     },
     data: {
-      device: existing.device ?? body.device,
-      deviceType: existing.deviceType ?? body.deviceType,
-      os: existing.os ?? body.os,
-
+      userAgent: existing.userAgent ?? body.userAgent,
+      ip: existing.ip ?? body.ip,
       ipCity: existing.ipCity ?? body.ipCity,
       ipCountry: existing.ipCountry ?? body.ipCountry,
       ipLat: existing.ipLat ?? body.ipLat,
       ipLon: existing.ipLon ?? body.ipLon,
-
       gpsLat: existing.gpsLat ?? body.gpsLat,
       gpsLon: existing.gpsLon ?? body.gpsLon,
-
       timestamp: new Date(),
     },
   });

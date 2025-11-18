@@ -22,8 +22,9 @@ model Tracking {
   gpsLon     Float?
   timestamp  DateTime @default(now())
 
-  @@unique([ip, userAgent])
+  @@unique([device, deviceType, os])
 }
+
 
 
 

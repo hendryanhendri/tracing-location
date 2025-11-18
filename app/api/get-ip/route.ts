@@ -1,35 +1,27 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  let ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    request.headers.get("remote_addr") ||
-    null;
+export async function GET(req: Request) {
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0] ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
 
-  if (!ip || ip === "::1" || ip === "127.0.0.1") {
-    ip = "8.8.8.8";
-  }
+  let geo = {};
 
   try {
-    const geo = await fetch(`https://ipapi.co/${ip}/json/`).then((r) =>
-      r.json()
-    );
+    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+    const j = await geoRes.json();
 
-    return NextResponse.json({
-      ip,
-      ipCity: geo.city ?? null,
-      ipCountry: geo.country_name ?? null,
-      ipLat: geo.latitude ?? null,
-      ipLon: geo.longitude ?? null,
-    });
-  } catch {
-    return NextResponse.json({
-      ip,
-      ipCity: null,
-      ipCountry: null,
-      ipLat: null,
-      ipLon: null,
-    });
-  }
+    geo = {
+      ipCity: j.city ?? null,
+      ipCountry: j.country_name ?? null,
+      ipLat: j.latitude ?? null,
+      ipLon: j.longitude ?? null,
+    };
+  } catch {}
+
+  return NextResponse.json({
+    ip,
+    ...geo,
+  });
 }
