@@ -21,4 +21,7 @@ model Tracking {
   gpsLat    Float?
   gpsLon    Float?
   timestamp DateTime @default(now())
+
+  @@unique([ip, userAgent])
 }
+
