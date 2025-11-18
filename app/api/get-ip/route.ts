@@ -9,14 +9,14 @@ export async function GET(req: Request) {
   let geo = {};
 
   try {
-    const r = await fetch(`https://ipapi.co/${ip}/json/`);
-    const j = await r.json();
+    const res = await fetch(`https://ipapi.co/${ip}/json/`);
+    const json = await res.json();
 
     geo = {
-      ipCity: j.city ?? null,
-      ipCountry: j.country_name ?? null,
-      ipLat: j.latitude ?? null,
-      ipLon: j.longitude ?? null,
+      ipCity: json.city ?? null,
+      ipCountry: json.country_name ?? null,
+      ipLat: json.latitude ?? null,
+      ipLon: json.longitude ?? null,
     };
   } catch {}
 

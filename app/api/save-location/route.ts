@@ -9,12 +9,16 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
+  const device = body.device ?? "Unknown Device";
+  const deviceType = body.deviceType ?? "Unknown Type";
+  const os = body.os ?? "Unknown OS";
+
   const existing = await prisma.tracking.findUnique({
     where: {
       device_deviceType_os: {
-        device: body.device,
-        deviceType: body.deviceType,
-        os: body.os,
+        device,
+        deviceType,
+        os,
       },
     },
   });
@@ -22,18 +26,29 @@ export async function POST(req: Request) {
   if (!existing) {
     const created = await prisma.tracking.create({
       data: {
-        ...body,
+        device,
+        deviceType,
+        os,
+        userAgent: body.userAgent ?? null,
+        ip: body.ip ?? null,
+        ipCity: body.ipCity ?? null,
+        ipCountry: body.ipCountry ?? null,
+        ipLat: body.ipLat ?? null,
+        ipLon: body.ipLon ?? null,
+        gpsLat: body.gpsLat ?? null,
+        gpsLon: body.gpsLon ?? null,
       },
     });
+
     return NextResponse.json({ status: "inserted", id: created.id });
   }
 
   const updated = await prisma.tracking.update({
     where: {
       device_deviceType_os: {
-        device: body.device,
-        deviceType: body.deviceType,
-        os: body.os,
+        device,
+        deviceType,
+        os,
       },
     },
     data: {

