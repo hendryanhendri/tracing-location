@@ -9,8 +9,8 @@ export async function GET(req: Request) {
   let geo = {};
 
   try {
-    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-    const j = await geoRes.json();
+    const r = await fetch(`https://ipapi.co/${ip}/json/`);
+    const j = await r.json();
 
     geo = {
       ipCity: j.city ?? null,
@@ -20,8 +20,5 @@ export async function GET(req: Request) {
     };
   } catch {}
 
-  return NextResponse.json({
-    ip,
-    ...geo,
-  });
+  return NextResponse.json({ ip, ...geo });
 }

@@ -8,7 +8,7 @@ export async function GET() {
   }).$extends(withAccelerate());
 
   const data = await prisma.tracking.findMany({
-    orderBy: { id: "desc" }
+    orderBy: { id: "desc" },
   });
 
   return NextResponse.json(data);

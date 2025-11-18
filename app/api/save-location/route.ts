@@ -22,22 +22,9 @@ export async function POST(req: Request) {
   if (!existing) {
     const created = await prisma.tracking.create({
       data: {
-        device: body.device,
-        deviceType: body.deviceType,
-        os: body.os,
-        userAgent: body.userAgent,
-
-        ip: body.ip,
-        ipCity: body.ipCity,
-        ipCountry: body.ipCountry,
-        ipLat: body.ipLat,
-        ipLon: body.ipLon,
-
-        gpsLat: body.gpsLat,
-        gpsLon: body.gpsLon,
+        ...body,
       },
     });
-
     return NextResponse.json({ status: "inserted", id: created.id });
   }
 
